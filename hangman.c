@@ -54,6 +54,9 @@ int main(int argc, char * argv) {
 				printf("\n");
 				return 0;
 			}
+			else if (guess < 97 || guess > 122) {
+				continue;
+			}
 			else {
 				int i;
 				for (i = 0; i < strlen(found); i++) {

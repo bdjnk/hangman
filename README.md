@@ -1,4 +1,4 @@
 hangman
 =======
 
-Command line hangman game written in C
+A simple command line hangman game, written in C
