@@ -12,14 +12,14 @@ struct wordlist {
 	struct word * list[90000];
 } words;
 
-void load() {
+void load(char * path) {
 	srand(time(NULL));
 
 	char temp[30];
 	size_t index = 0;	
 
 	FILE * pFileWords;
-	pFileWords = fopen("/usr/share/wordlist", "r");
+	pFileWords = fopen(path, "r");
 	while (fscanf(pFileWords, "%s", temp) != EOF) {
 
 		size_t length = strlen(temp);
@@ -32,10 +32,51 @@ void load() {
 	words.count = index;
 }
 
-int main(int argc, char * argv) {
-	load();
+int main(int argc, char * argv[]) {
+
+	char * path = "/usr/share/wordlist";
+	long min = 3;
+
+	if (argc > 1) {
+		if (strcmp(argv[1], "-h") == 0) {
+			printf("\nhangman command line arguments:\n\
+					\n-w path\n\tPath to a whitespace seperated list of words.\
+					\n-s size\n\tMinimum word size.\n");
+			return 0;
+		}
+		else {
+			int i = 1;
+			do {
+				if (strcmp(argv[i], "-w") == 0) {
+					if (i+1 < argc) { i++; }
+					else {
+						printf("\n-w requires a word-list path\n");
+						return 1;
+					}
+					path = argv[i];
+				}
+				if (strcmp(argv[i], "-s") == 0) {
+					if (i+1 < argc) { i++; }
+					else {
+						printf("\n-s requires a minimum size\n");
+						return 1;
+					}
+					min = strtol(argv[i], NULL, 0);
+				}
+				i++;
+			}	while (i < argc);
+		}
+	}
+
+	load(path);
+	printf("\n");
+
 	do {
-		struct word * word = words.list[rand()%words.count];
+		struct word * word;
+		do {
+			word = words.list[rand()%words.count];
+		} while (word->length < min);
+
 		int guess;
 		int left = 5;
 		char wrong[30] = "";
