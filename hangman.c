@@ -19,7 +19,7 @@ void load() {
 	size_t index = 0;	
 
 	FILE * pFileWords;
-	pFileWords = fopen("wordlist", "r");
+	pFileWords = fopen("/usr/share/wordlist", "r");
 	while (fscanf(pFileWords, "%s", temp) != EOF) {
 
 		size_t length = strlen(temp);
