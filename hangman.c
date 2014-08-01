@@ -10,19 +10,27 @@ struct word {
 struct wordlist {
 	size_t count;
 	struct word * list[90000];
+	size_t maxlen;
 } words;
 
 void load(char * path) {
 	srand(time(NULL));
 
 	char temp[30];
-	size_t index = 0;	
+	size_t index = 0;
+	words.maxlen = 1;
 
 	FILE * pFileWords;
 	pFileWords = fopen(path, "r");
+	if (pFileWords == NULL) {
+		printf("\nno wordlist found at %s\n", path);
+		exit(1);
+	}
 	while (fscanf(pFileWords, "%s", temp) != EOF) {
-
 		size_t length = strlen(temp);
+		if (words.maxlen < length) {
+			words.maxlen = length;
+		}
 		words.list[index] = malloc(sizeof(struct word));
 		words.list[index]->text = (char *)malloc(length*sizeof(char)+1);
 		strcpy(words.list[index]->text, temp);
@@ -32,63 +40,27 @@ void load(char * path) {
 	words.count = index;
 }
 
-int main(int argc, char * argv[]) {
-
-	char * path = "/usr/share/wordlist";
-	long min = 3;
-
-	if (argc > 1) {
-		if (strcmp(argv[1], "-h") == 0) {
-			printf("\nhangman command line arguments:\n\
-					\n-w path\n\tPath to a whitespace seperated list of words.\
-					\n-s size\n\tMinimum word size.\n");
-			return 0;
-		}
-		else {
-			int i = 1;
-			do {
-				if (strcmp(argv[i], "-w") == 0) {
-					if (i+1 < argc) { i++; }
-					else {
-						printf("\n-w requires a word-list path\n");
-						return 1;
-					}
-					path = argv[i];
-				}
-				if (strcmp(argv[i], "-s") == 0) {
-					if (i+1 < argc) { i++; }
-					else {
-						printf("\n-s requires a minimum size\n");
-						return 1;
-					}
-					min = strtol(argv[i], NULL, 0);
-				}
-				i++;
-			}	while (i < argc);
-		}
-	}
-
-	load(path);
+int play(int minlen) {
 	printf("\n");
 
 	do {
 		struct word * word;
 		do {
 			word = words.list[rand()%words.count];
-		} while (word->length < min);
+		} while (word->length < minlen);
 
 		int guess;
-		int left = 5;
+		int chances = 5;
 		char wrong[30] = "";
 		char found[word->length+1];
 		memset(found, '\0', word->length+1);
 		memset(found, '_', word->length);
 
-		printf("solved %s | left %i | wrong '%s'  ", found, left, wrong);
+		printf("solved %s | chances %i | wrong '%s'  ", found, chances, wrong);
 		do {
 			guess = getchar();
 			if (guess == '\n') {
-				printf("solved %s | left %i | wrong '%s'  ", found, left, wrong);
+				printf("solved %s | chances %i | wrong '%s'  ", found, chances, wrong);
 				continue;
 			}
 			else if (guess == EOF) {
@@ -107,12 +79,12 @@ int main(int argc, char * argv[]) {
 				}
 				if (strchr(found, guess) == NULL && strchr(wrong, guess) == NULL) {
 					strncat(wrong, (char *)&guess, 30);
-					left--;
+					chances--;
 				}
 			}
-		} while (strchr(found, '_') != NULL && left > 0);
-		printf("solved %s | left %i | wrong '%s'\n", word->text, left, wrong);
-		if (left > 0) {
+		} while (strchr(found, '_') != NULL && chances > 0);
+		printf("solved %s | chances %i | wrong '%s'\n", word->text, chances, wrong);
+		if (chances > 0) {
 			printf("VICTORY!\n\n");
 		} else {
 			printf("DEFEAT!\n\n");
@@ -120,4 +92,47 @@ int main(int argc, char * argv[]) {
 		while (getchar() != '\n') { /* do nothing */ };
 	} while(1);
 	return 0;
+}
+
+int main(int argc, char * argv[]) {
+
+	char * path = "/usr/share/wordlist";
+	long minlen = 3;
+
+	if (argc > 1) {
+		if (strcmp(argv[1], "-h") == 0) {
+			printf("\nhangman command line arguments:\n\
+					\n-w path\n\tPath to a whitespace seperated list of words.\
+					\n-s size\n\tMinimum word size.\n");
+			return 0;
+		}
+		else {
+			int i = 1;
+			do {
+				if (strcmp(argv[i], "-w") == 0) {
+					if (i+1 < argc) { i++; }
+					else {
+						printf("\n-w requires a wordlist path\n");
+						return 1;
+					}
+					path = argv[i];
+				}
+				if (strcmp(argv[i], "-s") == 0) {
+					if (i+1 < argc) { i++; }
+					else {
+						printf("\n-s requires a minimum size\n");
+						return 1;
+					}
+					minlen = strtol(argv[i], NULL, 0);
+				}
+				i++;
+			}	while (i < argc);
+		}
+	}
+	load(path);
+	if (minlen > words.maxlen) {
+		printf("\nsize must not be larger than the longest word, %u\n", words.maxlen);
+		exit(1);
+	}
+	return play(minlen);
 }
