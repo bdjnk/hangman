@@ -11,14 +11,14 @@ struct wordlist {
 	size_t count;
 	struct word * list[90000];
 	size_t maxlen;
-} words;
+} * words;
 
 void load(char * path) {
-	srand(time(NULL));
-
 	char temp[30];
 	size_t index = 0;
-	words.maxlen = 1;
+
+	words = malloc(sizeof(struct wordlist));
+	words->maxlen = 1;
 
 	FILE * pFileWords;
 	pFileWords = fopen(path, "r");
@@ -28,25 +28,26 @@ void load(char * path) {
 	}
 	while (fscanf(pFileWords, "%s", temp) != EOF) {
 		size_t length = strlen(temp);
-		if (words.maxlen < length) {
-			words.maxlen = length;
+		if (words->maxlen < length) {
+			words->maxlen = length;
 		}
-		words.list[index] = malloc(sizeof(struct word));
-		words.list[index]->text = (char *)malloc(length*sizeof(char)+1);
-		strcpy(words.list[index]->text, temp);
-		words.list[index]->length = length;
+		words->list[index] = malloc(sizeof(struct word));
+		words->list[index]->text = (char *)malloc(length*sizeof(char)+1);
+		strcpy(words->list[index]->text, temp);
+		words->list[index]->length = length;
 		index++;
 	}
-	words.count = index;
+	words->count = index;
 }
 
 int play(int minlen) {
 	printf("\n");
 
+	srand(time(NULL));
 	do {
 		struct word * word;
 		do {
-			word = words.list[rand()%words.count];
+			word = words->list[rand()%words->count];
 		} while (word->length < minlen);
 
 		int guess;
@@ -130,8 +131,8 @@ int main(int argc, char * argv[]) {
 		}
 	}
 	load(path);
-	if (minlen > words.maxlen) {
-		printf("\nsize must not be larger than the longest word, %u\n", words.maxlen);
+	if (minlen > words->maxlen) {
+		printf("\nsize must not be larger than the longest word, %u\n", words->maxlen);
 		exit(1);
 	}
 	return play(minlen);
